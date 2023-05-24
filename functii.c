@@ -1,9 +1,9 @@
 #include "functii.h"
 
-Team* read(int* numTeams)
-{
+Team* citeste(char* fisier,int* numTeams)
+{   
      int i,j;
-    FILE* file=fopen("d.in", "r");
+    FILE* file=fopen(fisier, "r");
     if (file == NULL) {
         printf("Eroare la deschiderea fisierului.\n");
         return 1;
@@ -18,10 +18,11 @@ Team* read(int* numTeams)
         fgetc(file);
         fgets(teamName,100,file);
         teamName[strlen(teamName)-1]='\0';
-        for(j=1;j<strlen(teamName);j++)
-        if(teamName[strlen(teamName)-j]==' ')
+         for(j=1;j<strlen(teamName);j++)
+        if(teamName[strlen(teamName)-j]==' ' && teamName[strlen(teamName)-j]=='\r')  
         teamName[strlen(teamName)-j]='\0';
         else j=strlen(teamName);
+        
         Team* team = createTeam(teamName,numPlayers);
         for (j = 0; j < numPlayers; j++) {
             char firstName[100];
@@ -35,7 +36,6 @@ Team* read(int* numTeams)
         addTeamToList(&list, team);
     }
     fclose(file);
-   // printList(list);
    return list;
 }
 Player* createPlayer(char* firstName, char* secondName, int points) {
@@ -71,6 +71,7 @@ void addTeamToList(Team** list, Team* team) {
 void printList(Team* list,FILE* g) {
     Team* currentTeam = list;
     while (currentTeam != NULL) {
+        
         fprintf(g,"%s\n", currentTeam->name);
         currentTeam = currentTeam->next;
     }
@@ -78,7 +79,7 @@ void printList(Team* list,FILE* g) {
 void verifica_numar_echipe(Team** list, int numTeams)
 {
     int i=1,numNecesar;
-    while(i<numTeams)
+    while(i<=numTeams)
     {
         numNecesar=i;
         i=i*2;
@@ -96,8 +97,9 @@ void verifica_numar_echipe(Team** list, int numTeams)
             }
             currentTeam = currentTeam->next;
         }
-    elimina(list,minTeam);
+    elimina(&(*list),minTeam);
     }
+    
 
 }
 void elimina(Team** list, Team* team) {
@@ -117,31 +119,87 @@ void elimina(Team** list, Team* team) {
         free(team);
     }
 }
-/*void elimina(Team** list,float minpoints)
-{       if(*list==NULL)
-        return;
-        Team* temp=*list;
-        if(temp->points==minpoints)
-        {
-                *list=(*list)->next;
-                free(temp);
-                return;
-        }
-        Team* prevTeam=*list;
-        while(temp!=NULL)
-        {
-            if((*list)->points!=minpoints)
-            {
-                prevTeam=temp;
-                temp=temp->next;
+void creareMeciuri(MatchQueue* meciuri, Team** list)
+{
+    Team* currentTeam=*list;
+    MatchQueue* currentMatch=meciuri;
+    while(currentTeam!=NULL && currentTeam->next!=NULL)
+    {
+        currentMatch->team1=currentTeam;
+        currentTeam=currentTeam->next;
+        currentMatch->team2=currentTeam;
+        currentTeam=currentTeam->next;
+        currentMatch->next=(MatchQueue*)malloc(sizeof(MatchQueue));
+        currentMatch=currentMatch->next;
+        currentMatch->next=NULL;
 
-            }
-            else
-            {
-                prevTeam->next=temp->next;
-                free(temp);
-                return;
-            }
-        }
+    }
 }
-*/
+void jocuri(MatchQueue* meciuri, WinnerStack* castigatori, LoserStack* pierzatori)
+{
+    MatchQueue* currentMatch=meciuri;
+    while(currentMatch->next!=NULL)
+    {
+        if(currentMatch->team1->points>=currentMatch->team2->points)
+        {
+            actualizarePuncte(currentMatch->team1);
+            actualizareCastigatori(&castigatori,currentMatch->team1);
+            actualizarePierzatori(&pierzatori,currentMatch->team2);
+        }
+        else
+        {
+            actualizarePuncte(currentMatch->team2);
+            actualizareCastigatori(&castigatori,currentMatch->team2);
+            actualizarePierzatori(&pierzatori,currentMatch->team1);
+        }
+        currentMatch=currentMatch->next;
+
+    }
+}
+void actualizarePuncte(Team* castigator)
+{
+    castigator->points+=1.0;
+}
+void actualizareCastigatori(WinnerStack** castigatori,Team* echipa)
+{
+    WinnerStack* newNode = (WinnerStack*)malloc(sizeof(WinnerStack));
+    newNode->team = echipa;
+    newNode->next=*castigatori;
+    *castigatori=newNode;
+}
+void actualizarePierzatori(LoserStack** pierzatori,Team* echipa)
+{
+    LoserStack* newNode = (LoserStack*)malloc(sizeof(LoserStack));
+    newNode->team = echipa;
+    newNode->next=*pierzatori;
+    *pierzatori=newNode;
+}
+void procesareMeciuri(Team** list, int* numTeams)
+{
+    MatchQueue meciuri;
+    WinnerStack *castigatori=(WinnerStack*)malloc(sizeof(WinnerStack));
+    LoserStack *pierzatori=(LoserStack*)malloc(sizeof(LoserStack));
+    creareMeciuri(&meciuri, list);
+    castigatori->team=malloc(sizeof(Team));
+    pierzatori->team=malloc(sizeof(Team));
+    jocuri(&meciuri,&castigatori,&pierzatori);
+    int i;
+    for(i=0; i<(*numTeams)/2; i++)
+    {
+        addTeamToList(&list, castigatori->team);
+        castigatori->team=castigatori->team->next;
+    }
+    (*numTeams)=(*numTeams)/2;
+
+    //freeLoserStack(&pierzatori);
+}
+void freeLoserStack(LoserStack** pierzatori)
+{
+    LoserStack* current = *pierzatori;
+    while (current != NULL)
+    {
+        LoserStack* temp = current;
+        current = current->next;
+        free(temp);
+    }
+}
