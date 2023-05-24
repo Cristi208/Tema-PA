@@ -1,20 +1,21 @@
 #include "functii.h"
 
-void read()
+Team* read(int* numTeams)
 {
-     int i,j,numTeams;
+     int i,j;
     FILE* file=fopen("d.in", "r");
     if (file == NULL) {
         printf("Eroare la deschiderea fisierului.\n");
         return 1;
     }
-      fscanf(file,"%d",&numTeams);
+      fscanf(file,"%d",numTeams);
     Team* list = NULL;
 
-    for (i = 0; i < numTeams; i++) {
+    for (i = 0; i < (*numTeams); i++) {
         int numPlayers;
         fscanf(file, "%d", &numPlayers);
         char teamName[100];
+        fgetc(file);
         fgets(teamName,100,file);
         teamName[strlen(teamName)-1]='\0';
         Team* team = createTeam(teamName,numPlayers);
@@ -30,7 +31,8 @@ void read()
         addTeamToList(&list, team);
     }
     fclose(file);
-    printList(list);
+   // printList(list);
+   return list;
 }
 Player* createPlayer(char* firstName, char* secondName, int points) {
     Player* player = (Player*)malloc(sizeof(Player));
@@ -75,3 +77,79 @@ void printList(Team* list) {
         currentTeam = currentTeam->next;
     }
 }
+void verifica_numar_echipe(Team** list, int numTeams)
+{
+    int i=1,numNecesar;
+    while(i<numTeams)
+    {
+        numNecesar=i;
+        i=i*2;
+    }
+    numNecesar=numTeams-numNecesar;
+    for (i = 0; i < numNecesar; i++)
+    {
+    float minpoints=(*list)->points;
+    Team* minTeam=*list;
+    Team* currentTeam=(*list)->next;
+       /* while(points!=NULL)
+        {
+            if(points->points < minpoints)
+                minpoints=points->points;
+            points=points->next;
+        }*/
+        while (currentTeam != NULL) {
+            if (currentTeam->points < minpoints) {
+                minpoints = currentTeam->points;
+                minTeam = currentTeam;
+            }
+            currentTeam = currentTeam->next;
+        }
+    elimina(list,minTeam);
+    }
+
+}
+void elimina(Team** list, Team* team) {
+    if (*list == team) {
+        *list = (*list)->next;
+        free(team);
+        return;
+    }
+
+    Team* currentTeam = *list;
+    while (currentTeam != NULL && currentTeam->next != team) {
+        currentTeam = currentTeam->next;
+    }
+
+    if (currentTeam != NULL) {
+        currentTeam->next = team->next;
+        free(team);
+    }
+}
+/*void elimina(Team** list,float minpoints)
+{       if(*list==NULL)
+        return;
+        Team* temp=*list;
+        if(temp->points==minpoints)
+        {
+                *list=(*list)->next;
+                free(temp);
+                return;
+        }
+        Team* prevTeam=*list;
+        while(temp!=NULL)
+        {
+            if((*list)->points!=minpoints)
+            {
+                prevTeam=temp;
+                temp=temp->next;
+
+            }
+            else
+            {
+                prevTeam->next=temp->next;
+                free(temp);
+                return;
+            }
+        }
+}
+*/

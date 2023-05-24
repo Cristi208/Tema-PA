@@ -1,6 +1,11 @@
 #include "functii.h"
 int main()
 {
-    read();
+    int numTeams;
+
+    Team* list = read(&numTeams);
+    verifica_numar_echipe(&list,numTeams);
+    printList(list);
     return 0;
 }
+
