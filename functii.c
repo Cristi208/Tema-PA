@@ -18,6 +18,10 @@ Team* read(int* numTeams)
         fgetc(file);
         fgets(teamName,100,file);
         teamName[strlen(teamName)-1]='\0';
+        for(j=1;j<strlen(teamName);j++)
+        if(teamName[strlen(teamName)-j]==' ')
+        teamName[strlen(teamName)-j]='\0';
+        else j=strlen(teamName);
         Team* team = createTeam(teamName,numPlayers);
         for (j = 0; j < numPlayers; j++) {
             char firstName[100];
@@ -64,16 +68,10 @@ void addTeamToList(Team** list, Team* team) {
     team->next = *list;
     *list = team;
 }
-void printList(Team* list) {
+void printList(Team* list,FILE* g) {
     Team* currentTeam = list;
     while (currentTeam != NULL) {
-        printf("Team: %s\n", currentTeam->name);
-        Player* currentPlayer = currentTeam->players;
-        while (currentPlayer != NULL) {
-            printf("Player: %s %s\n", currentPlayer->firstName, currentPlayer->secondName);
-            currentPlayer = currentPlayer->next;
-        }
-        printf("Total points: %.2f\n\n", currentTeam->points);
+        fprintf(g,"%s\n", currentTeam->name);
         currentTeam = currentTeam->next;
     }
 }
@@ -91,12 +89,6 @@ void verifica_numar_echipe(Team** list, int numTeams)
     float minpoints=(*list)->points;
     Team* minTeam=*list;
     Team* currentTeam=(*list)->next;
-       /* while(points!=NULL)
-        {
-            if(points->points < minpoints)
-                minpoints=points->points;
-            points=points->next;
-        }*/
         while (currentTeam != NULL) {
             if (currentTeam->points < minpoints) {
                 minpoints = currentTeam->points;
